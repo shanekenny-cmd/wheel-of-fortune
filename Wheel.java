@@ -24,7 +24,7 @@ import java.util.Random;
 
 public class Wheel {
 
-	public final int B_RUPT = 1, L_TURN = 2;
+	public final int L_TURN = 1, B_RUPT = 2;
 	private final int[] T_DOLL = {2500, 3500, 3500, 5000};
 	private final int[] N_VALS = {500, 600, 700, 800, 900};
 	private Random random;
@@ -40,17 +40,17 @@ public class Wheel {
 
 	public void newWheel(int round) {
 
-		int ruptIndex = this.random.nextInt(22) + 1; // gives index from 1-23 inclusive
-		wheel[ruptIndex] = B_RUPT;
-		wheel[ruptIndex - 1] = L_TURN;
-		wheel[ruptIndex + 1] = L_TURN;
-		for (int i = 0; i < ruptIndex - 1; i++) {
+		int lTurnIndex = this.random.nextInt(22) + 1; // gives index from 1-23 inclusive
+		wheel[lTurnIndex] = L_TURN;
+		wheel[lTurnIndex - 1] = B_RUPT;
+		wheel[lTurnIndex + 1] = B_RUPT;
+		for (int i = 0; i < lTurnIndex - 1; i++) {
 			this.wheel[i] = this.N_VALS[this.random.nextInt(this.N_VALS.length)];
 		}
-		for (int i = ruptIndex + 2; i < this.wheel.length; i++) {
+		for (int i = lTurnIndex + 2; i < this.wheel.length; i++) {
 			this.wheel[i] = this.N_VALS[this.random.nextInt(this.N_VALS.length)];
 		}
-		int topIndex = (this.random.nextInt(22) + ruptIndex + 2) % this.wheel.length;
+		int topIndex = (this.random.nextInt(22) + lTurnIndex + 2) % this.wheel.length;
 		this.wheel[topIndex] = this.T_DOLL[round - 1];
 
 	}
