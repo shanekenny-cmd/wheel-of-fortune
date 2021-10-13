@@ -3,4 +3,6 @@
  * CSC381: Software Engineering
  */
 
- 
+// constructor - sets default values
+
+// newWheel - randomizes the wheel
