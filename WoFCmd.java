@@ -10,6 +10,8 @@ import java.util.Scanner;
 
 public class WoFCmd {
 
+	public static final int GAME_DURATION = 60 * 2; // two mins
+
 	public static final String[] PHRASES = {	"all the world is a stage",
 												"a bug's life",
 												"all that jazz",
@@ -33,52 +35,70 @@ public class WoFCmd {
 			players[i] = new Player();
 		}
 
+		new TimerDemo(GAME_DURATION, players);
+
 		boolean playing = true;
 		int cp = 0;
 
-		while (playing) {
+		while (playing) {// while playing, cycle thru players
 
 			cp %= 4;// makes sure index of player in players array stays in bounds
 
-			if (!players[cp].hasTurn()) {// checks to see if the player has a turn
+			if (!players[cp].hasTurn()) {// player is skipped
 
 				System.out.println("Player " + (cp + 1) + " turn skipped.");
 				players[cp].turnSkipped();
 				cp++;
 
-			} else {// if they do
+			} else {// player takes a turn
 
 				System.out.println("Player " + (cp + 1) + "'s turn.");
 				// put their options here
 				// this is where they can choose to solve the puzzle
-				int option = selectOption();
+				System.out.println("Please select one of the following options:\n1. Spin Wheel\n2. Solve\n3. Buy a vowel");
 
-				if (option == 2) {// they elected to solve
+				int option = selectOption(3);
+
+				if (option == 3) {// player buys a vowel
+
+					// have them buy a vowel
+					System.out.println("Please select a vowel to buy: ");
+					char vowel = getVowel();
+					System.out.println("$500 subtracted from Player " + (cp + 1) + "'s balance.");
+					players[cp].addBal(-500);
+					System.out.println("Player " + (cp + 1) + "'s balance is now " + players[cp].getBal());
+					int appears = guess(vowel);
+					System.out.println("\n" + vowel + " appears " + appears + " times.");
+
+				} else if (option == 2) {// player elects to solve
 
 					System.out.println("Please enter your guess: ");
 					String solution = sc.nextLine();
-					if (check(solution)) {
+					if (check(solution)) { // player guesses correctly
 						System.out.println("Correct!");
 						round++;
 						guesses = PUNC;
-					} else {
+						System.out.println("New clue: ");
+						guess(' ');
+						System.out.println("");
+					} else { // player guesses incorrectly
 
 						System.out.println("Incorrect.");
 						cp++;
 					}
 
-				} else if (option == 1) {// they elected to spin the wheel
+				} else if (option == 1) {// player spins wheel
 
 					int guessVal = wheel.spinWheel();
 					if (guessVal == wheel.B_RUPT) {
 
 						System.out.println("Player " + (cp + 1) + " goes bankrupt.");
-						players[cp++].bankrupt();
+						players[cp++].bankrupt(); // player goes bankrupt
 
 					} else if (guessVal == wheel.L_TURN) {
 
 						System.out.println("Player " + (cp + 1) + " loses a turn.");
-						players[cp++].skipTurn();
+						players[cp++].skipTurn();// player loses a turn
 
 					} else {
 						// heres where they guess
@@ -121,7 +141,7 @@ public class WoFCmd {
 								round++;
 								round %= PHRASES.length;
 							}
-						}
+						}// player guesses a letter
 					}
 
 				}
@@ -130,11 +150,36 @@ public class WoFCmd {
 		}
 	}
 
-	public static int selectOption() {
-		System.out.println("Please select one of the following options:\n1. Spin Wheel\n2. Solve");
+	public static char getVowel() {
 		sc = new Scanner(System.in);
-		int result = Integer.parseInt(sc.nextLine().charAt(0) + "");
-		return result;
+		char vowel = sc.nextLine().charAt(0);
+		vowel = ((vowel + "").toLowerCase()).charAt(0);
+		String vowels = "aeiou";
+		if (vowels.indexOf(vowel) != -1) {
+			return vowels.charAt(vowels.indexOf(vowel));
+		}
+		System.out.println("Please select a valid vowel.");
+		return getVowel();
+	}
+
+	public static int selectOption(int range) {
+		sc = new Scanner(System.in);
+		int result = -1;
+		try {
+
+			result = Integer.parseInt(sc.nextLine().charAt(0) + "");
+			if (result > range || result < 1) {
+				System.out.println("Please select an option from 1 to " + range + ".");
+				return selectOption(range);
+			}
+			return result;
+
+		} catch (Exception e) {
+
+			System.out.println("Invalid input. Please try again.");
+			return selectOption(range);
+
+		}
 	}
 
 	public static boolean completed(String secret) {
