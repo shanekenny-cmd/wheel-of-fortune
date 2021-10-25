@@ -30,10 +30,13 @@ public class WoFCmd {
 
 		Wheel wheel = new Wheel();
 
-		Player[] players = new Player[4];
+		// take input to initialize custom number of players here.
+		int numPlayers = 4;
+		Player[] players = new Player[numPlayers];
 		for (int i = 0; i < players.length; i++) {
-			players[i] = new Player();
+			players[i] = new Player();// maybe use this for loop to input names
 		}
+
 
 		new TimerDemo(GAME_DURATION, players);
 
