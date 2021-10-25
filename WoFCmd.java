@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 public class WoFCmd {
 
-	public static final int GAME_DURATION = 60 * 2; // two mins
+	public static final int GAME_DURATION = 10 * 60; // two mins
 
 	public static final String[] PHRASES = {	"all the world is a stage",
 												"a bug's life",
@@ -134,12 +134,10 @@ public class WoFCmd {
 							} else if (completed(PHRASES[round])) {
 
 								System.out.println("Player " + (cp + 1) + " wins the round.");
-								players[cp].addBank(players[cp].getBal());
-
-								for (Player player: players) {
-									player.setBal(0);
+								for (Player p: players) {
+									p.addBank(p.getBal());
+									p.setBal(0);
 								}
-
 								guesses = PUNC;
 								round++;
 								round %= PHRASES.length;
