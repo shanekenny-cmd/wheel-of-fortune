@@ -21,27 +21,27 @@ public class WoFCmd {
 	public static String guesses = " .,/\\+=@#$%^&*()-_!`~:;\'\"{}[]";
 
 	public static Scanner sc;
-	public static int round = 0;
+	public static int round = 0, cp = 0;
+	public static Wheel wheel;
+	public static Player[] players;
 
 
 	public static void main(String [] args) {
 
 		sc = new Scanner(System.in);
 
-		Wheel wheel = new Wheel();
+		wheel = new Wheel();
 
 		// take input to initialize custom number of players here.
 		int numPlayers = 4;
-		Player[] players = new Player[numPlayers];
+		players = new Player[numPlayers];
 		for (int i = 0; i < players.length; i++) {
 			players[i] = new Player();// maybe use this for loop to input names
 		}
 
-
 		new TimerDemo(GAME_DURATION, players);
 
 		boolean playing = true;
-		int cp = 0;
 
 		displayClue();
 
@@ -74,24 +74,18 @@ public class WoFCmd {
 					System.out.println("Player " + (cp + 1) + "'s balance is now " + players[cp].getBal());
 					int appears = guess(vowel);
 					System.out.println("\n" + vowel + " appears " + appears + " times.");
-					if (appears == 0) { cp++; }
+					if (appears == 0) { 
+						cp++;
+					} else if (completed(PHRASES[round])) {
+						endRound();
+					}
 
 				} else if (option == 2) {// player elects to solve
 
 					System.out.println("Please enter your guess: ");
 					String solution = sc.nextLine();
 					if (check(solution)) { // player guesses correctly
-						System.out.println("Correct!");
-						System.out.println("Player " + (cp + 1) + " wins the round.");
-						for (Player p: players) {
-							p.addBank(p.getBal());
-							p.setBal(0);
-						}
-						round++;
-						guesses = PUNC;
-						System.out.println("New clue: ");
-						displayClue();
-						System.out.println("");
+						endRound();
 					} else { // player guesses incorrectly
 
 						System.out.println("Incorrect.");
@@ -140,19 +134,7 @@ public class WoFCmd {
 								playing = false;
 
 							} else if (completed(PHRASES[round])) {
-
-								System.out.println("Player " + (cp + 1) + " wins the round.");
-								for (Player p: players) {
-									p.addBank(p.getBal());
-									p.setBal(0);
-								}
-								guesses = PUNC;
-								round++;
-								wheel.newWheel(round + 1);
-								round %= PHRASES.length;
-								System.out.println("New clue: ");
-								displayClue();
-								System.out.println("");
+								endRound();
 							}
 						}
 					}
@@ -247,5 +229,20 @@ public class WoFCmd {
 			}
 		}
 		System.out.println("- ");
+	}
+
+	public static void endRound() {
+		System.out.println("Player " + (cp + 1) + " wins the round.");
+		for (Player p: players) {
+			p.addBank(p.getBal());
+			p.setBal(0);
+		}
+		round++;
+		round %= PHRASES.length;
+		wheel.newWheel(round + 1);
+		guesses = PUNC;
+		System.out.println("New clue: ");
+		displayClue();
+		System.out.println("");
 	}
 }
