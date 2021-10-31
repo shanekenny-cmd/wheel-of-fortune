@@ -22,7 +22,7 @@ public class TimerDemo {
       // here is the task to be completed when the timer is up
       System.out.println("Time's up!");
       int winner = 0;
-      System.out.println(winner + ": " + this.players[winner].getBank());
+      System.out.println((winner + 1) + ": " + this.players[winner].getBank());
       for (int i = 1; i < this.players.length; i++) {
         System.out.println((i + 1) + ": " + this.players[i].getBank());
         if (this.players[i].getBank() > this.players[winner].getBank()) {

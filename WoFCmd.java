@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 public class WoFCmd {
 
-	public static final int GAME_DURATION = 10 * 60; // two mins
+	public static final int GAME_DURATION = 5 * 60; // two mins
 
 	public static final String[] PHRASES = {	"all the world is a stage",
 												"a bug's life",
@@ -43,6 +43,8 @@ public class WoFCmd {
 		boolean playing = true;
 		int cp = 0;
 
+		displayClue();
+
 		while (playing) {// while playing, cycle thru players
 
 			cp %= 4;// makes sure index of player in players array stays in bounds
@@ -72,6 +74,7 @@ public class WoFCmd {
 					System.out.println("Player " + (cp + 1) + "'s balance is now " + players[cp].getBal());
 					int appears = guess(vowel);
 					System.out.println("\n" + vowel + " appears " + appears + " times.");
+					if (appears == 0) { cp++; }
 
 				} else if (option == 2) {// player elects to solve
 
@@ -79,10 +82,15 @@ public class WoFCmd {
 					String solution = sc.nextLine();
 					if (check(solution)) { // player guesses correctly
 						System.out.println("Correct!");
+						System.out.println("Player " + (cp + 1) + " wins the round.");
+						for (Player p: players) {
+							p.addBank(p.getBal());
+							p.setBal(0);
+						}
 						round++;
 						guesses = PUNC;
 						System.out.println("New clue: ");
-						guess(' ');
+						displayClue();
 						System.out.println("");
 					} else { // player guesses incorrectly
 
@@ -140,9 +148,13 @@ public class WoFCmd {
 								}
 								guesses = PUNC;
 								round++;
+								wheel.newWheel(round + 1);
 								round %= PHRASES.length;
+								System.out.println("New clue: ");
+								displayClue();
+								System.out.println("");
 							}
-						}// player guesses a letter
+						}
 					}
 
 				}
@@ -211,15 +223,29 @@ public class WoFCmd {
 
 	public static boolean check(String guess) {
 		System.out.println(" -" + guess + "- ");
-		System.out.println(" -" + PHRASES[round] + "- ");
 		if (guess.length() != PHRASES[round].length()) {
+			displayClue();
 			return false;
 		}
 		for (int i = 0; i < guess.length(); i++) {
 			if ((guess.toCharArray())[i] != (PHRASES[round].toCharArray())[i]) {
+				displayClue();
 				return false;
 			}
 		}
+		System.out.println(" -" + PHRASES[round] + "- ");
 		return true;
+	}
+
+	public static void displayClue() {
+		System.out.print(" -");
+		for (char c: PHRASES[round].toCharArray()) {
+			if (guesses.indexOf(c) != -1) {
+				System.out.print(c);
+			} else {
+				System.out.print("*");
+			}
+		}
+		System.out.println("- ");
 	}
 }
