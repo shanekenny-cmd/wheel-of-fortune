@@ -12,12 +12,15 @@ public class Clue {
 	private static final String PUNC = " .,/\\+=@#$%^&*()-_!`~:;\'\"{}[]";
 	public static final int REPEAT = -2, MISS = -1;
 
+	private static int currentIndex;
+
 	private String currentPhrase, guesses, displayPhrase;
 
 	public Clue() {
 
-		this.currentPhrase = this.PHRASES[0];// change this to be random index that doesn't repeat phrases
-		this.guesses = this.PUNC;
+		this.currentIndex = 0;// change this to be random index that doesn't repeat phrases
+		this.currentPhrase = this.PHRASES[this.currentIndex];
+		this.guesses = this.PUNC;	
 		this.updateDisplayPhrase();
 
 	}
@@ -31,6 +34,25 @@ public class Clue {
 				this.displayPhrase += "*";
 			}
 		}
+	}
+
+	public void newRound() {
+		this.guesses = this.PUNC;
+		this.currentIndex = (this.currentIndex + 1) % this.PHRASES.length;
+		this.currentPhrase = this.PHRASES[this.currentIndex];
+	}
+
+	public boolean solve(String solution) {
+		if (solution.length() != this.PHRASES[currentIndex].length()) {
+			return false;
+		}
+		for (int i = 0; i < solution.length(); i++) {
+			if (solution.toCharArray()[i] != this.PHRASES[currentIndex].toCharArray()[i]) {
+				return false;
+			}
+		}
+		this.guesses += solution;
+		return true;
 	}
 
 	public int check(char letterGuessed) {
@@ -51,6 +73,15 @@ public class Clue {
 			return hits;
 		}
 		return this.REPEAT;
+	}
+
+	public boolean completed() {
+		for (char s: this.currentPhrase.toCharArray()) {
+			if (guesses.indexOf(s) == -1) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public String getDisplayPhrase() {

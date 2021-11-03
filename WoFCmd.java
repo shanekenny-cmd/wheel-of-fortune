@@ -24,6 +24,7 @@ public class WoFCmd {
 	public static int round = 0, cp = 0;
 	public static Wheel wheel;
 	public static Player[] players;
+	public static Clue clue;
 
 
 	public static void main(String [] args) {
@@ -31,6 +32,8 @@ public class WoFCmd {
 		sc = new Scanner(System.in);
 
 		wheel = new Wheel();
+
+		clue = new Clue();
 
 		// take input to initialize custom number of players here.
 		int numPlayers = 4;
@@ -72,11 +75,12 @@ public class WoFCmd {
 					System.out.println("$500 subtracted from Player " + (cp + 1) + "'s balance.");
 					players[cp].addBal(-500);
 					System.out.println("Player " + (cp + 1) + "'s balance is now " + players[cp].getBal());
-					int appears = guess(vowel);
+					int appears = clue.check(vowel);
 					System.out.println("\n" + vowel + " appears " + appears + " times.");
+					displayClue();
 					if (appears == 0) { 
 						cp++;
-					} else if (completed(PHRASES[round])) {
+					} else if (clue.completed()) {
 						endRound();
 					}
 
@@ -84,7 +88,8 @@ public class WoFCmd {
 
 					System.out.println("Please enter your guess: ");
 					String solution = sc.nextLine();
-					if (check(solution)) { // player guesses correctly
+					if (clue.solve(solution)) { // player guesses correctly
+						displayClue();
 						endRound();
 					} else { // player guesses incorrectly
 
@@ -117,7 +122,8 @@ public class WoFCmd {
 
 						}
 
-						int hits = guess(letterGuessed);
+						int hits = clue.check(letterGuessed);
+						displayClue();
 						if (hits == 0) {
 
 							System.out.println("\nIncorrect guess.\nPlayer " + (cp + 1) + " turn is over.");
@@ -133,7 +139,7 @@ public class WoFCmd {
 								System.out.println("Player " + (cp + 1) + " is the winner!");
 								playing = false;
 
-							} else if (completed(PHRASES[round])) {
+							} else if (clue.completed()) {
 								endRound();
 							}
 						}
@@ -177,69 +183,27 @@ public class WoFCmd {
 		}
 	}
 
-	public static boolean completed(String secret) {
-		for (char s: secret.toCharArray()) {
-			if (guesses.indexOf(s) == -1) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public static int guess(char letter) {
-		// change this to ignore the case of the letter
-		guesses += letter;
-		int hits = 0;
-		for (char secretLetter: PHRASES[round].toCharArray()) {
-			if (guesses.indexOf(secretLetter) == -1) {
-				System.out.print('*');
-			} else {
-				System.out.print(secretLetter);
-				if (secretLetter == letter) {
-					hits++;
-				}
-			}
-		}
-		return hits;
-	}
-
-	public static boolean check(String guess) {
-		System.out.println(" -" + guess + "- ");
-		if (guess.length() != PHRASES[round].length()) {
-			displayClue();
-			return false;
-		}
-		for (int i = 0; i < guess.length(); i++) {
-			if ((guess.toCharArray())[i] != (PHRASES[round].toCharArray())[i]) {
-				displayClue();
-				return false;
-			}
-		}
-		System.out.println(" -" + PHRASES[round] + "- ");
-		return true;
-	}
 
 	public static void displayClue() {
 		System.out.print(" -");
-		for (char c: PHRASES[round].toCharArray()) {
-			if (guesses.indexOf(c) != -1) {
-				System.out.print(c);
-			} else {
-				System.out.print("*");
-			}
-		}
+		System.out.print(clue.getDisplayPhrase());
 		System.out.println("- ");
 	}
 
 	public static void endRound() {
+		// this needs to increment the round
+		// bank all the players balances
+		// create a new clue
+		// create a new wheel
+
 		System.out.println("Player " + (cp + 1) + " wins the round.");
 		for (Player p: players) {
 			p.addBank(p.getBal());
 			p.setBal(0);
 		}
 		round++;
-		round %= PHRASES.length;
 		wheel.newWheel(round + 1);
+		clue.newRound();
 		guesses = PUNC;
 		System.out.println("New clue: ");
 		displayClue();

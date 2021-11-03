@@ -51,8 +51,11 @@ public class Wheel {
 			this.wheel[i] = this.N_VALS[this.random.nextInt(this.N_VALS.length)];
 		}
 		int topIndex = (this.random.nextInt(22) + lTurnIndex + 2) % this.wheel.length;
-		this.wheel[topIndex] = this.T_DOLL[round - 1];
-
+		if ((round - 1) > 3) {
+			this.wheel[topIndex] = this.T_DOLL[3];
+		} else {
+			this.wheel[topIndex] = this.T_DOLL[round - 1];
+		}
 	}
 
 	public int spinWheel() {
