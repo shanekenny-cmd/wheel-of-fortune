@@ -1,0 +1,42 @@
+public static int numRounds()
+    {
+        try
+        {
+            System.out.println("How many rounds would you like? ");
+
+            int  round = sc.nextInt();
+
+        }
+        catch (Exception e)
+        {
+            System.out.println("Invalid  ");
+
+        }
+        return round;
+    }
+
+    public static int playerQuan()
+    {
+        System.out.println("Please enter how many player? (2,4,or 6) ");
+        int numPlayers  = sc.nextInt();
+
+        if (numPlayers % 2 == 0 && numPlayers > 0 && numPlayers < 8) {
+            players = new Player[numPlayers];
+        }
+
+        else
+        {
+            System.out.println("That's an incorrect number of players!!( ");
+
+        }
+
+        return numPlayers;
+
+    }
+    
+     Player a = new Player();
+            System.out.println("Please enter your name? ");
+            String namePlayer  = sc.next();
+            a.setName(namePlayer);
+
+            System.out.println(a.getName());
