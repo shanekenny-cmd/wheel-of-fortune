@@ -3,23 +3,43 @@
  * all processing to determine if guesses are correct
  */
 
+import java.util.*;
+import java.io.*;
 
 public class Clue {
-	private static final String[] PHRASES = {	"all the world is a stage",
-												"a bug's life",
-												"all that jazz",
-												"behind closed doors" };
 	private static final String PUNC = " .,/\\+=@#$%^&*()-_!`~:;\'\"{}[]";
 	public static final int REPEAT = -2, MISS = -1;
 
-	private static int currentIndex;
+	private int currentIndex;
 
 	private String currentPhrase, guesses, displayPhrase;
+	private ArrayList<String> data;
+	private String[] phrases;
 
-	public Clue() {
+	private Scanner in;
+
+	public Clue() throws FileNotFoundException {
+
+		try {
+        	in = new Scanner(new FileReader("Cluebank"));
+        } catch (FileNotFoundException e) {
+        	in = new Scanner(new FileReader("../Cluebank"));
+        }
+
+        data = new ArrayList<String>();
+
+        while (in.hasNextLine()) {  
+           data.add(in.nextLine().toUpperCase());
+        } 
+    	
+    	Collections.shuffle(data);
+    	phrases = new String[data.size()];
+    	for (int i = 0; i < data.size(); i++) {
+    		phrases[i] = data.get(i);
+    	}
 
 		this.currentIndex = 0;// change this to be random index that doesn't repeat phrases
-		this.currentPhrase = this.PHRASES[this.currentIndex];
+		this.currentPhrase = this.phrases[this.currentIndex];
 		this.guesses = this.PUNC;	
 		this.updateDisplayPhrase();
 
@@ -38,16 +58,16 @@ public class Clue {
 
 	public void newRound() {
 		this.guesses = this.PUNC;
-		this.currentIndex = (this.currentIndex + 1) % this.PHRASES.length;
-		this.currentPhrase = this.PHRASES[this.currentIndex];
+		this.currentIndex = (this.currentIndex + 1) % this.phrases.length;
+		this.currentPhrase = this.phrases[this.currentIndex];
 	}
 
 	public boolean solve(String solution) {
-		if (solution.length() != this.PHRASES[currentIndex].length()) {
+		if (solution.length() != this.phrases[currentIndex].length()) {
 			return false;
 		}
 		for (int i = 0; i < solution.length(); i++) {
-			if (solution.toCharArray()[i] != this.PHRASES[currentIndex].toCharArray()[i]) {
+			if (solution.toCharArray()[i] != this.phrases[currentIndex].toCharArray()[i]) {
 				return false;
 			}
 		}
@@ -87,6 +107,10 @@ public class Clue {
 	public String getDisplayPhrase() {
 		this.updateDisplayPhrase();
 		return this.displayPhrase;
+	}
+
+	public String getPhrase() {
+		return this.currentPhrase;
 	}
 }
 

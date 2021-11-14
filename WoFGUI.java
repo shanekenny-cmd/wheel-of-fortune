@@ -50,26 +50,11 @@ public class WoFGUI extends JFrame {
 			// identify the button
 			int index = (int) (label) - ((int) 'A');
 			buttons[index].setEnabled(false); // disable this character's button for further use
-			
-			if (actualText.indexOf(label) == -1) { // character not in the movie title
-				incorrectGuessCount++;
-			} else {
-				for (int i = 0; i < actualText.length(); i++) {
-					if (actualText.charAt(i) == label) {
-						displayedText = "";
-			   
-						if (i == actualText.length() - 1) {
-							dashes[i] = "  " + label;
-						} else {
-							dashes[i] = "  " + label + "  ";
-						}
-						
-						for (String s : dashes) {
-							displayedText += s;
-						}
-					}
-				}
-			}
+
+            wf.getClue().check(label);
+
+            displayedText = wf.getClue().getDisplayPhrase();
+
 			repaint();
 		}
 	}
@@ -86,7 +71,26 @@ public class WoFGUI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             String sol = solutionField.getText();
-            wf.submitSolve(sol);
+            if (wf.submitSolve(sol)) {
+                // round is over
+            }
+            repaint();
+        }
+        
+    }
+
+    /**
+     * 
+     * An ActionListener implementation for the PlayAgain button. Button only enabled after the player either wins
+     *  or loses a round. When pressed, everything resets with a new movie title.
+     *
+     *
+     */
+    private class BuzzerListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            char label = ((JButton) (e.getSource())).getText().charAt(0);
             repaint();
         }
         
@@ -107,9 +111,9 @@ public class WoFGUI extends JFrame {
 			if (wf.isEmpty()) {
 				displayedText = "We are all out of movie titles. Sorry!";
 			} else {
-    			getMovieTitle();
+    			getNewClue();
     			initDisplayedText();
-	       
+
     			for (JButton b: buttons) {
     				b.setEnabled(true);
     			}
@@ -145,7 +149,14 @@ public class WoFGUI extends JFrame {
     private Container container;
     private JButton[] buttons = new JButton[26];
     private JButton playAgain;
+    private JButton solve;
+    private JButton spin;
+    private JButton buyVowel;
+    private JButton[] buzzers;
     private JTextField solutionField;
+
+    private boolean buyingVowel;
+    private boolean tossUpRound;
 
     
     
@@ -166,7 +177,10 @@ public class WoFGUI extends JFrame {
     public WoFGUI() throws IOException {
         super("Hangman: Movie Titles");
         wf = new WheelOfFortune();
-        getMovieTitle();
+        getNewClue();
+
+        buyingVowel = false;
+        tossUpRound = false;
 
         initDisplayedText();
         setLayout(new FlowLayout());
@@ -178,7 +192,7 @@ public class WoFGUI extends JFrame {
     /**
      * Initiates or re-initiates a few fields
      */
-    private void getMovieTitle() {
+    private void getNewClue() {
     	actualText = wf.getNext();       
         dashes = new String[actualText.length()];
         incorrectGuessCount = 0;
@@ -189,16 +203,17 @@ public class WoFGUI extends JFrame {
      * Initializes the displayedText variable, which is then displayed on the GUI.
      */
     private void initDisplayedText() {
-        for (int i = 0; i < actualText.length(); i++) {
-            if (actualText.charAt(i) == ' ') {
-            	dashes[i] = "      ";
-            }
-            else {
-            	dashes[i] = "_____ ";
-            }
+        displayedText = wf.getClue().getDisplayPhrase();
+        // for (int i = 0; i < actualText.length(); i++) {
+        //     if (actualText.charAt(i) == ' ') {
+        //     	dashes[i] = "      ";
+        //     }
+        //     else {
+        //     	dashes[i] = "_____ ";
+        //     }
             
-            displayedText += dashes[i];
-        }  
+        //     displayedText += dashes[i];
+        // }  
     }
     
     /**
@@ -215,7 +230,13 @@ public class WoFGUI extends JFrame {
         	container.add(buttons[i]);
         	buttons[i].addActionListener(charListener);
         }
-        
+        buzzers = new JButton[wf.numPlayers()];
+        for (int i = 0; i < buzzers.length; i++) {
+            buzzers[i] = new JButton("Player " + (i + 1));
+            container.add(buzzers[i]);
+            buzzers[i].addActionListener(new BuzzerListener());
+            buzzers[i].setEnabled(false);
+        }
         playAgain = new JButton("Play Again?"); 
         container.add(playAgain); 
         playAgain.addActionListener(new PlayAgainListener());
@@ -242,100 +263,40 @@ public class WoFGUI extends JFrame {
         Graphics2D g2 = (Graphics2D) g;
         
         g2.drawString(displayedText, 250, 175);
-        
-        // GALLOWS
-        Line2D.Double post = new Line2D.Double(200, 600, 200, 200); //post
-        g2.draw(post);
-        Line2D.Double top = new Line2D.Double(200, 200, 400, 200); //top
-        g2.draw(top);
-        Line2D.Double rope = new Line2D.Double(400, 200, 400, 250); //rope
-        g2.draw(rope);
-        Line2D.Double bottom = new Line2D.Double(100, 600, 300, 600);
-        g2.draw(bottom);
-        
-        if (incorrectGuessCount >= 1) { //HEAD
-            Ellipse2D.Double head = new Ellipse2D.Double(370, 250, 60, 60);
-            g2.draw(head);
-        }
 
-        if (incorrectGuessCount >= 2) { //BODY
-            Line2D.Double body = new Line2D.Double(400, 310, 400, 420);
-            g2.draw(body);
-        }
-
-        if (incorrectGuessCount >= 3) { // LEFT ARM
-            Line2D.Double leftArm = new Line2D.Double(400, 360, 330, 360);
-            g2.draw(leftArm);
-        }
-
-        if (incorrectGuessCount >= 4) { // RIGHT ARM
-            Line2D.Double rightArm = new Line2D.Double(470, 360, 400, 360);
-            g2.draw(rightArm);
-        }
-
-        if (incorrectGuessCount >= 5) { // RIGHT LEG
-            Line2D.Double rightLeg = new Line2D.Double(400, 420, 455, 475);
-            g2.draw(rightLeg);
-        }
-
-        if (incorrectGuessCount >= 6) { // LEFT LEG
-            Line2D.Double leftLeg = new Line2D.Double(400, 420, 345, 475);
-            g2.draw(leftLeg);
-        }
-
-        if (incorrectGuessCount >= 7) {
+        if (buyingVowel) {
             for (JButton b: buttons) {
-                b.setEnabled(false);
+                if ("aeioou".indexOf(b.getText().charAt(0)) == -1) {
+                    b.setEnabled(false);
+                }
             }
-            
-            //EYE12
-            Line2D.Double eye11 = new Line2D.Double(385, 265, 390, 275);
-            g2.draw(eye11);
-            //EYE12
-            Line2D.Double eye12 = new Line2D.Double(390, 265, 385, 275);
-            g2.draw(eye12);
-            //EYE21
-            Line2D.Double eye21 = new Line2D.Double(410, 265, 415, 275);
-            g2.draw(eye21);
-            //EYE22
-            Line2D.Double eye22 = new Line2D.Double(415, 265, 410, 275);
-            g2.draw(eye22);
-            //MOUTH
-            Line2D.Double mouth = new Line2D.Double(390, 290, 410, 290);
-            g2.draw(mouth);
-            Arc2D.Double mouth1 = new Arc2D.Double(400, 285, 8, 12, 0, -180, Arc2D.OPEN);
-            g2.draw(mouth1);
-            
-            g2.drawString(actualText, 450, 200);
-            playAgain.setEnabled(true);
+        }
+
+        if (tossUpRound) {
+            for (JButton b: buzzers) {
+                b.setEnabled(true);
+            }
         }
 
         if (isWinner()) {
             for (JButton b: buttons) {
                 b.setEnabled(false);
             }
-
-            if (incorrectGuessCount >= 1) {
-                Ellipse2D.Double leftEye = new Ellipse2D.Double(390, 265, 5, 5);
-                g2.draw(leftEye);
-                Ellipse2D.Double rightEye = new Ellipse2D.Double(408, 265, 5, 5);
-                g2.draw(rightEye);
-                Arc2D.Double mouth = new Arc2D.Double(390, 284, 23, 12, 0, -180, Arc2D.OPEN);
-                g2.draw(mouth);
-                playAgain.setEnabled(true);
-            }
+            Ellipse2D.Double leftEye = new Ellipse2D.Double(390, 265, 5, 5);
+            g2.draw(leftEye);
+            Ellipse2D.Double rightEye = new Ellipse2D.Double(408, 265, 5, 5);
+            g2.draw(rightEye);
+            Arc2D.Double mouth = new Arc2D.Double(390, 284, 23, 12, 0, -180, Arc2D.OPEN);
+            g2.draw(mouth);
+            playAgain.setEnabled(true);
         }
     }
 
     /**
      * 
-     * @return true if the player's guess matches the movie title.
-     * 
-     * Checked by removing whitespace from each string and checking their equality.
+     * @return true if the players have completed the clue
      */
     private boolean isWinner() {
-        String s = displayedText.replaceAll("\\s+", "");
-        String t = actualText.replaceAll("\\s+", "");
-       	return s.equals(t);
+       	return wf.getClue().completed();
     }
 }
