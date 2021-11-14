@@ -67,7 +67,7 @@ public class Clue {
 			return false;
 		}
 		for (int i = 0; i < solution.length(); i++) {
-			if (solution.toCharArray()[i] != this.phrases[currentIndex].toCharArray()[i]) {
+			if (Character.toLowerCase(solution.toCharArray()[i]) != Character.toLowerCase(this.phrases[currentIndex].toCharArray()[i])) {
 				return false;
 			}
 		}
@@ -102,6 +102,10 @@ public class Clue {
 			}
 		}
 		return true;
+	}
+
+	public String getGuesses() {
+		return this.guesses;
 	}
 
 	public String getDisplayPhrase() {
