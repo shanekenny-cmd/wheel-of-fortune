@@ -17,7 +17,7 @@ public class WoFGUI extends JFrame {
 	public static void main(String[] args) throws IOException {
         WoFGUI wof = new WoFGUI();
         wof.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        wof.setSize(1000, 1000);
+        wof.setSize(1088, 800);
         wof.setLocationRelativeTo(null);
         wof.setVisible(true);
     }
@@ -84,19 +84,24 @@ public class WoFGUI extends JFrame {
         public void actionPerformed(ActionEvent e) {
             String sol = solutionField.getText();
             if (wf.submitSolve(sol)) {
-                // round is over
-                // bank currentPlayers balance
-                getNewClue();
-                initDisplayedText();
+                // // round is over
+                // // bank currentPlayers balance
+                // getNewClue();
+                // initDisplayedText();
+                // roundNumber++;
 
-                for (JButton b: buttons) {
-                    b.setEnabled(true);
-                }
+                // for (JButton b: buttons) {
+                //     b.setEnabled(true);
+                // }
+                solutionField.setText("");
+                repaint();
             } else {
+                solutionField.setText("");
                 wf.nextPlayer();
+                repaint();
             }
-            solutionField.setText("");
-            repaint();
+            // solutionField.setText("");
+            // repaint();
         }
         
     }
@@ -143,21 +148,22 @@ public class WoFGUI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             // disable solve and buy vowel buttons
-            solutionField.setEnabled(false);
-            buyVowel.setEnabled(false);
-            spin.setEnabled(false);
             spinValue = wf.getWheel().spinWheel();
+            wheelMessages = "";
             if (spinValue == 2) {
                 // bankrupt current player
+                wheelMessages += "Player " + (wf.getCP() + 1) + " goes bankrupt.";
                 wf.bankrupt();
-                displayedText += " Player " + (wf.getCP() + 1) + " goes bankrupt.";
             } else if (spinValue == 1) {
                 // current player loses turn
-                displayedText += " Player " + (wf.getCP() + 1) + " loses a turn.";
+                wheelMessages += "Player " + (wf.getCP() + 1) + " loses a turn.";
                 wf.nextPlayer();
             } else {
+                solutionField.setEnabled(false);
+                buyVowel.setEnabled(false);
+                spin.setEnabled(false);
                 spun = true;
-                displayedText += " value: " + spinValue;
+                wheelMessages += "Spin Value: " + spinValue + ".";
             }
             repaint();
         }
@@ -168,10 +174,37 @@ public class WoFGUI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             // disable solve and buy vowel buttons
+            // only allow contestants to buy a vowel if they have enough money(500)
             solutionField.setEnabled(false);
             buyVowel.setEnabled(false);
             spin.setEnabled(false);
             buyingVowel = true;
+            repaint();
+        }
+        
+    }
+
+    /**
+     * 
+     * An ActionListener implementation for the nextRound button. 
+     *
+     *
+     */
+    private class NextRoundListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            getNewClue();
+            initDisplayedText();
+
+            for (JButton b: buttons) {
+                b.setEnabled(true);
+            }
+            spin.setEnabled(true);
+            buyVowel.setEnabled(true);
+            solutionField.setEnabled(true);
+            playAgain.setEnabled(false);
             repaint();
         }
         
@@ -189,24 +222,45 @@ public class WoFGUI extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			if (wf.isEmpty()) {
-				displayedText = "We are all out of movie titles. Sorry!";
-			} else {
-    			getNewClue();
-    			initDisplayedText();
+            try {
+                wf = new WheelOfFortune();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            getNewClue();
 
-    			for (JButton b: buttons) {
-    				b.setEnabled(true);
-    			}
-			}
-			spin.setEnabled(true);
-            buyVowel.setEnabled(true);
-            solutionField.setEnabled(true);
-			playAgain.setEnabled(false);
+            buyingVowel = false;
+            tossUpRound = false;
+            spun = false;
+            spinValue = 0;
+            roundNumber = 0;
+
+            initDisplayedText();
+            // initPlayerInfo();
+            setLayout(new FlowLayout());
+            initButtons();
+            initTextField();
+            setVisible(true);
 			repaint();
 		}
 		
 	}
+
+    /**
+     * 
+     * An ActionListener implementation for the PlayAgain button. Button only enabled after the player either wins
+     *  or loses a round. When pressed, everything resets with a new movie title.
+     *
+     *
+     */
+    private class QuitButtonListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            System.exit(0);
+        }
+        
+    }
 	
 	
 	
@@ -227,6 +281,7 @@ public class WoFGUI extends JFrame {
     
     private String actualText;
     private String displayedText;
+    private String wheelMessages;
     private String playerInfo;
     private String currentPlayer;
 
@@ -234,8 +289,10 @@ public class WoFGUI extends JFrame {
     private Container container;
     private JButton[] buttons = new JButton[26];
     private JButton playAgain;
+    private JButton quitButton;
     private JButton spin;
     private JButton buyVowel;
+    private JButton nextRound;
     private JButton[] buzzers;
     private JTextField solutionField;
 
@@ -258,8 +315,7 @@ public class WoFGUI extends JFrame {
     
     /**
      * 
-     * @throws IOException HangmanMaker constructor uses a scanner to read a file, which will throw the exception
-     * 		if file not present.
+     * @throws IOException WheelOfFortune constructor uses Scanner which throws IOException FileNotFoundException
      * 
      */
     public WoFGUI() throws IOException {
@@ -267,10 +323,13 @@ public class WoFGUI extends JFrame {
         wf = new WheelOfFortune();
         getNewClue();
 
+        wheelMessages = "";
+
         buyingVowel = false;
         tossUpRound = false;
         spun = false;
         spinValue = 0;
+        roundNumber = 0;
 
         initDisplayedText();
         // initPlayerInfo();
@@ -346,10 +405,23 @@ public class WoFGUI extends JFrame {
         buyVowel.addActionListener(new BuyVowelListener());
         buyVowel.setEnabled(true);
 
-        playAgain = new JButton("Play Again?"); 
+        // add next round button here - enabled if the round is over, blocking
+        nextRound = new JButton("Next Round");
+        container.add(nextRound);
+        nextRound.addActionListener(new NextRoundListener());
+        nextRound.setEnabled(false);
+
+        playAgain = new JButton("Play Again");// change to reset the whole game, only enabled when game over
         container.add(playAgain); 
         playAgain.addActionListener(new PlayAgainListener());
         playAgain.setEnabled(false);
+
+        // add quit button here - enable when game over, just System.exit(0) if clicked
+        quitButton = new JButton("Quit");
+        container.add(quitButton);
+        quitButton.addActionListener(new QuitButtonListener());
+        quitButton.setEnabled(true);
+
     }
 
     /**
@@ -371,18 +443,22 @@ public class WoFGUI extends JFrame {
         super.paint(g);
         Graphics2D g2 = (Graphics2D) g;
         
-        g2.drawString(displayedText, 250, 175);
+        g2.drawString(displayedText, 100, 175);
+
+        g2.drawString(wheelMessages, 100, 200);
 
         currentPlayer = "Player " + (wf.getCP() + 1) + "'s turn.";
-        g2.drawString(currentPlayer, 250, 225);
+        g2.drawString(currentPlayer, 100, 225);
 
         playerInfo = wf.getPlayerString();
-        g2.drawString(playerInfo, 250, 300);
+        g2.drawString(playerInfo, 100, 250);
 
-        g2.drawString(roundNumber + "", 250, 325);
+        g2.drawString("Round: " + (roundNumber + 1), 100, 275);
+
+        nextRound.setEnabled(false);
 
         for (JButton b: buttons) {
-            if (wf.getClue().getGuesses().indexOf(b.getText().charAt(0)) == -1 && spun) {
+            if (wf.getClue().getGuesses().indexOf(Character.toLowerCase(b.getText().charAt(0))) == -1 && spun) {
                 b.setEnabled(true);
             } else {
                 b.setEnabled(false);
@@ -393,7 +469,7 @@ public class WoFGUI extends JFrame {
             for (JButton b: buttons) {
                 // if it is a vowel, and it hasn't been guessed, enable it
                 displayedText += b.getText().charAt(0) + " ";
-                if ("AEIOU".indexOf(b.getText().charAt(0)) != -1 && wf.getClue().getGuesses().indexOf(b.getText().charAt(0)) == -1) {
+                if ("aeiou".indexOf(Character.toLowerCase(b.getText().charAt(0))) != -1 && wf.getClue().getGuesses().indexOf(Character.toLowerCase(b.getText().charAt(0))) == -1) {
                     b.setEnabled(true);
                 }
             }
@@ -405,25 +481,29 @@ public class WoFGUI extends JFrame {
             }
         }
 
-        if (isWinner()) {
+        if (isCompleted()) {
             for (JButton b: buttons) {
                 b.setEnabled(false);
             }
             spin.setEnabled(false);
             buyVowel.setEnabled(false);
             solutionField.setEnabled(false);
-            Ellipse2D.Double leftEye = new Ellipse2D.Double(390, 265, 5, 5);
+            nextRound.setEnabled(true);
+            Ellipse2D.Double leftEye = new Ellipse2D.Double(100, 500, 5, 5);
             g2.draw(leftEye);
-            Ellipse2D.Double rightEye = new Ellipse2D.Double(408, 265, 5, 5);
+            Ellipse2D.Double rightEye = new Ellipse2D.Double(118, 500, 5, 5);
             g2.draw(rightEye);
-            Arc2D.Double mouth = new Arc2D.Double(390, 284, 23, 12, 0, -180, Arc2D.OPEN);
+            Arc2D.Double mouth = new Arc2D.Double(100, 519, 23, 12, 0, -180, Arc2D.OPEN);
             g2.draw(mouth);
-            roundNumber++;
-            if (roundNumber > 4) {
-                g2.drawString("Game Over.", 250, 400);
-            } else {
-                playAgain.setEnabled(true);
+            if (roundNumber < 4) {
+                roundNumber++;
             }
+        }
+
+        if (roundNumber >= 4) {
+            g2.drawString("Game Over.", 100, 300);
+            // call method to wtite game data to file in wf
+            // ask playAgain
         }
     }
 
@@ -431,7 +511,7 @@ public class WoFGUI extends JFrame {
      * 
      * @return true if the players have completed the clue
      */
-    private boolean isWinner() {
+    private boolean isCompleted() {
        	return wf.getClue().completed();
     }
 }

@@ -34,6 +34,7 @@ public class WheelOfFortune
 
     public void nextPlayer() {
         this.cp++;
+        this.cp %= this.players.length;
     }
     public int getCP() {
         return this.cp;
@@ -46,13 +47,15 @@ public class WheelOfFortune
     }
     public void bankrupt() {
         this.players[this.cp].setBal(0);
+        this.cp++;
+        this.cp %= this.players.length;
     }
     public String getPlayerString() {
         String toString = "";
         for (int i = 0; i < this.players.length; i++) {
-            toString += "Player " + i + 
+            toString += "Player " + (i + 1) + 
                         ":\nBalance: " + this.players[i].getBal() + 
-                        "\nBank: " + this.players[i].getBank() + "\n";
+                        "\nBank: " + this.players[i].getBank() + "     ";
         }
         return toString;
     }
@@ -74,17 +77,13 @@ public class WheelOfFortune
 
     public boolean submitSolve(String s) {
         // check to see if s is the correct string
-        if (this.clue.solve(s)) {
-            this.clue.newRound();
-            return true;
-        }
-        return false;
+        return this.clue.solve(s);
     }
 
     public String getNext() {
         this.players[this.cp].addBank(this.players[this.cp].getBal());
         for (int i = 0; i < this.players.length; i++) {
-            this.players[this.cp].setBal(0);
+            this.players[i].setBal(0);
         }
         this.clue.newRound();
         return this.clue.getPhrase();

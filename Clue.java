@@ -29,7 +29,7 @@ public class Clue {
         data = new ArrayList<String>();
 
         while (in.hasNextLine()) {  
-           data.add(in.nextLine().toUpperCase());
+           data.add(in.nextLine().toLowerCase());
         } 
     	
     	Collections.shuffle(data);
@@ -72,12 +72,14 @@ public class Clue {
 			}
 		}
 		this.guesses += solution;
+		//System.out.println(this.guesses);
 		return true;
 	}
 
 	public int check(char letterGuessed) {
 		// takes a char
 		// if it is not in guesses, but it is in currentPhrase, return # of appearances, update displayPhrase
+		letterGuessed = Character.toLowerCase(letterGuessed);
 		if (this.guesses.indexOf(letterGuessed) == -1) {
 			this.guesses += letterGuessed;
 			if (this.currentPhrase.indexOf(letterGuessed) == -1) {
@@ -97,10 +99,11 @@ public class Clue {
 
 	public boolean completed() {
 		for (char s: this.currentPhrase.toCharArray()) {
-			if (guesses.indexOf(s) == -1) {
+			if (this.guesses.indexOf(Character.toLowerCase(s)) == -1) {
 				return false;
 			}
 		}
+		//System.out.println("true");
 		return true;
 	}
 
