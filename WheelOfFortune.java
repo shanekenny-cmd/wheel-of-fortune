@@ -51,12 +51,12 @@ public class WheelOfFortune
         this.cp++;
         this.cp %= this.players.length;
     }
-    public String getPlayerString() {
-        String toString = "";
+    public String[] getPlayerString() {
+        String[] toString = new String[this.players.length];
         for (int i = 0; i < this.players.length; i++) {
-            toString += "Player " + (i + 1) + 
+            toString[i] = "Player " + (i + 1) + 
                         ":\nBalance: " + this.players[i].getBal() + 
-                        "\nBank: " + this.players[i].getBank() + "     ";
+                        "\nBank: " + this.players[i].getBank();
         }
         return toString;
     }
@@ -81,12 +81,13 @@ public class WheelOfFortune
         return this.clue.solve(s);
     }
 
-    public String getNext() {
+    public String getNext(int round) {
         this.players[this.cp].addBank(this.players[this.cp].getBal());
         for (int i = 0; i < this.players.length; i++) {
             this.players[i].setBal(0);
         }
         this.clue.newRound();
+        this.wheel.newWheel(round);
         return this.clue.getPhrase();
     }
 

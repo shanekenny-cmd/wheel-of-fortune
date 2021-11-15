@@ -5,6 +5,7 @@ import java.awt.geom.*;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.awt.image.BufferedImage;
 
 
 public class WoFGUI extends JFrame {
@@ -26,14 +27,11 @@ public class WoFGUI extends JFrame {
 	
 	
 	
-	
 	/**************************************************************************************************************/
 	/**************************************************************************************************************/
 	/**************************************************************************************************************/
 	/**************************************************************************************************************/
 
-	
-	
 		
 	/**
 	 * 
@@ -99,7 +97,7 @@ public class WoFGUI extends JFrame {
                 displayedText = wf.getClue().getDisplayPhrase();
                 repaint();
             } else {
-                solutionField.setText("");
+                solutionField.setText("");// here we need to make it so that if its a toss-up, 
                 wf.nextPlayer();
                 repaint();
             }
@@ -316,7 +314,7 @@ public class WoFGUI extends JFrame {
     private String actualText;
     private String displayedText;
     private String wheelMessages;
-    private String playerInfo;
+    private String[] playerInfo;// change this to be an array
     private String currentPlayer;
 
     private CharacterListener charListener;
@@ -329,6 +327,8 @@ public class WoFGUI extends JFrame {
     private JButton nextRound;
     private JButton[] buzzers;
     private JTextField solutionField;
+    private Image wheelImage;
+    private BufferedImage bufImg;
 
     // game state variables
     private int roundNumber;
@@ -356,7 +356,8 @@ public class WoFGUI extends JFrame {
     public WoFGUI() throws IOException {
         super("Wheel Of Fortune");
         wf = new WheelOfFortune();
-        getNewClue();
+
+        wheelImage = new ImageIcon("wheel_image.jpeg").getImage();
 
         wheelMessages = "";
 
@@ -366,6 +367,7 @@ public class WoFGUI extends JFrame {
         spinValue = 0;
         roundNumber = 0;
 
+        getNewClue();
         initDisplayedText();
         // initPlayerInfo();
         setLayout(new FlowLayout());
@@ -378,7 +380,7 @@ public class WoFGUI extends JFrame {
      * Initiates or re-initiates a few fields
      */
     private void getNewClue() {
-    	actualText = wf.getNext();
+    	actualText = wf.getNext(roundNumber + 1);
         displayedText = "";
     }
     
@@ -468,13 +470,34 @@ public class WoFGUI extends JFrame {
         solutionField.setEnabled(true);
     }
 
+    private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) throws IOException {
+        BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics2D = resizedImage.createGraphics();
+        graphics2D.drawImage(originalImage, 0, 0, targetWidth, targetHeight, null);
+        graphics2D.dispose();
+        return resizedImage;
+    }
+
     /**
      * Overrides the super class's paint method. 
      * repaint() will call this method without recreating the pop up window. 
      */
     public void paint(Graphics g) {
         super.paint(g);
-        Graphics2D g2 = (Graphics2D) g;
+
+        bufImg = new BufferedImage(wheelImage.getWidth(null), wheelImage.getHeight(null), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = bufImg.createGraphics();
+        g2.drawImage(wheelImage, 0, 0, null);
+        try {
+            bufImg = resizeImage(bufImg, 200, 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        g2.dispose();
+
+        g2 = (Graphics2D) g;
+
+        g2.drawImage(bufImg, null, 500, 175);
         
         g2.drawString(displayedText, 100, 175);
 
@@ -484,9 +507,11 @@ public class WoFGUI extends JFrame {
         g2.drawString(currentPlayer, 100, 225);
 
         playerInfo = wf.getPlayerString();
-        g2.drawString(playerInfo, 100, 250);
+        for (int i = 0; i < playerInfo.length; i++) {
+            g2.drawString(playerInfo[i], 100, 250 + (i * 25));
+        }
 
-        g2.drawString("Round: " + (roundNumber + 1), 100, 275);
+        g2.drawString("Round: " + (roundNumber + 1), 100, 250 + (playerInfo.length * 25));
 
         nextRound.setEnabled(false);
 
@@ -539,7 +564,7 @@ public class WoFGUI extends JFrame {
         }
 
         if (roundNumber >= 4) {
-            g2.drawString("Game Over.", 100, 300);
+            g2.drawString("Game Over.", 100, 250 + ((playerInfo.length + 1) * 25));
             // call method to wtite game data to file in wf
             // ask playAgain
             wf.updateStandings();
