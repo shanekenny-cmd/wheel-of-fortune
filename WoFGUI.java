@@ -3,6 +3,8 @@ import java.awt.event.*;
 import javax.swing.*;
 import java.awt.geom.*;
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class WoFGUI extends JFrame {
@@ -94,6 +96,7 @@ public class WoFGUI extends JFrame {
                 //     b.setEnabled(true);
                 // }
                 solutionField.setText("");
+                displayedText = wf.getClue().getDisplayPhrase();
                 repaint();
             } else {
                 solutionField.setText("");
@@ -119,7 +122,8 @@ public class WoFGUI extends JFrame {
         public void actionPerformed(ActionEvent e) {
             // "Player x"
             //  01234567
-            int label = Integer.parseInt(((JButton) (e.getSource())).getText().charAt(7) + "");
+            tossUpRound = false;
+            int label = Integer.parseInt(((JButton) (e.getSource())).getText().charAt(7) + "") - 1;
             wf.setCurrentPlayer(label);
 
             for (JButton b: buttons) {
@@ -129,8 +133,9 @@ public class WoFGUI extends JFrame {
             for (JButton b: buzzers) {
                 b.setEnabled(false);
             }
-
-
+            spin.setEnabled(false);
+            buyVowel.setEnabled(false);
+            solutionField.setEnabled(true);
 
             repaint();
         }
@@ -222,6 +227,8 @@ public class WoFGUI extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
+            wf = null;
+            timer = null;
             try {
                 wf = new WheelOfFortune();
             } catch (Exception ex) {
@@ -234,13 +241,15 @@ public class WoFGUI extends JFrame {
             spun = false;
             spinValue = 0;
             roundNumber = 0;
+            tossUpRound = true;
+            for (JButton b: buzzers) {
+                b.setEnabled(true);
+            }
+            playAgain.setEnabled(false);
+            spin.setEnabled(false);
+            buyVowel.setEnabled(false);
+            displayedText = wf.getClue().getDisplayPhrase();
 
-            initDisplayedText();
-            // initPlayerInfo();
-            setLayout(new FlowLayout());
-            initButtons();
-            initTextField();
-            setVisible(true);
 			repaint();
 		}
 		
@@ -261,9 +270,34 @@ public class WoFGUI extends JFrame {
         }
         
     }
-	
-	
-	
+
+    /** 
+     * 
+     * A class that extends TimerTask in order to tick for the tossuprounds
+     */
+    private class TossUpTick extends TimerTask {
+
+        public void run() {
+            for (int i = 97; i < 123 && tossUpRound; i++) {
+                if (wf.getClue().check(Character.toLowerCase((char)i)) > 0) {
+                    displayedText = wf.getClue().getDisplayPhrase();
+                    repaint();
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            // here the clue has been completed
+            // cp defaults to 0, no one gets anything
+            for (JButton b: buzzers) {
+                b.setEnabled(false);
+            }
+            tossUpRound = false;
+            timer = null;
+        }
+    }
 	
 	/**************************************************************************************************************/
 	/**************************************************************************************************************/
@@ -302,6 +336,7 @@ public class WoFGUI extends JFrame {
     private boolean tossUpRound;
     private boolean spun;
     private int spinValue;
+    private Timer timer;
 
     
     
@@ -326,7 +361,7 @@ public class WoFGUI extends JFrame {
         wheelMessages = "";
 
         buyingVowel = false;
-        tossUpRound = false;
+        tossUpRound = true;
         spun = false;
         spinValue = 0;
         roundNumber = 0;
@@ -343,9 +378,7 @@ public class WoFGUI extends JFrame {
      * Initiates or re-initiates a few fields
      */
     private void getNewClue() {
-    	actualText = wf.getNext();       
-        dashes = new String[actualText.length()];
-        incorrectGuessCount = 0;
+    	actualText = wf.getNext();
         displayedText = "";
     }
     
@@ -476,6 +509,11 @@ public class WoFGUI extends JFrame {
         }
 
         if (tossUpRound) {
+            if (timer == null) {
+                timer = new Timer();
+                timer.schedule(new TossUpTick(), 1000);
+            }
+
             for (JButton b: buzzers) {
                 b.setEnabled(true);
             }
@@ -504,6 +542,9 @@ public class WoFGUI extends JFrame {
             g2.drawString("Game Over.", 100, 300);
             // call method to wtite game data to file in wf
             // ask playAgain
+            wf.updateStandings();
+            playAgain.setEnabled(true);
+            nextRound.setEnabled(false);
         }
     }
 

@@ -1,5 +1,6 @@
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -92,5 +93,43 @@ public class WheelOfFortune
     public boolean isEmpty() {
         // if 
         return false;
+    }
+
+    private final String FILE_PATH = "data_file.csv";
+    public void updateStandings() {
+        // store player name, score
+        ArrayList<Player> standings = new ArrayList<Player>();
+        try {
+            FileReader reader = new FileReader(new File(FILE_PATH));
+            BufferedReader bR = new BufferedReader(reader);
+
+            String line;
+
+            while ((line = bR.readLine()) != null) {
+                Player p = new Player();
+                p.setBank(Integer.parseInt(line.substring(line.indexOf(",")  + 2)));
+                standings.add(p);
+            }
+            reader.close();
+
+            for (int i = 0; i < players.length; i++) {
+                standings.add(players[i]);
+            }
+            Collections.sort(standings, new Comparator<Player>(){
+                public int compare(Player o1, Player o2){
+                    return o2.getBank() - o1.getBank();
+                }
+            });
+            new FileWriter(FILE_PATH, false).close();
+            FileWriter writer = new FileWriter(FILE_PATH, false);
+            for (int i = 0; i < standings.size() && i < 5; i++) {
+                System.out.println("Player " + i + ", " + standings.get(i).getBank() + "\n");
+                writer.write("Player " + i + ", " + standings.get(i).getBank() + "\n");
+            }
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
