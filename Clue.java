@@ -12,7 +12,7 @@ public class Clue {
 
 	private int currentIndex;
 
-	private String currentPhrase, guesses, displayPhrase;
+	private String currentPhrase, guesses, displayPhrase, category;
 	private ArrayList<String> data;
 	private String[] phrases;
 
@@ -21,15 +21,19 @@ public class Clue {
 	public Clue() throws FileNotFoundException {
 
 		try {
-        	in = new Scanner(new FileReader("Cluebank"));
+        	in = new Scanner(new FileReader("lotsOfClues.csv"));
         } catch (FileNotFoundException e) {
-        	in = new Scanner(new FileReader("../Cluebank"));
+        	in = new Scanner(new FileReader("../lotsOfClues.csv"));
         }
 
         data = new ArrayList<String>();
 
-        while (in.hasNextLine()) {  
-           data.add(in.nextLine().toLowerCase());
+        while (in.hasNextLine()) {
+        	String line = in.nextLine();
+        	line = line.substring(1, line.substring(1).indexOf("\"") + 1).toLowerCase();
+        	if (!line.equals("puzzle")) {
+        		data.add(line);
+        	}
         } 
     	
     	Collections.shuffle(data);
