@@ -93,7 +93,9 @@ public class WoFGUI extends JFrame {
             } else {
                 if (tossUpRound) {
                     timer = new Timer();
-                    timer.schedule(new TossUpTick(), 1000);
+                    //timer.schedule(new TossUpTick(), 0);
+                    tot = new TossUpTick();
+                    tot.start();
                     ticking = true;
                 }
                 solutionField.setText("");// here we need to make it so that if its a toss-up, 
@@ -120,6 +122,8 @@ public class WoFGUI extends JFrame {
             // "Player x"
             //  01234567
             ticking = false;
+            tot.interrupt();
+            tot = null;
             int label = Integer.parseInt(((JButton) (e.getSource())).getText().charAt(7) + "") - 1;
             wf.setCurrentPlayer(label);
 
@@ -272,9 +276,14 @@ public class WoFGUI extends JFrame {
      * 
      * A class that extends TimerTask in order to tick for the tossuprounds
      */
-    private class TossUpTick extends TimerTask {
+    private class TossUpTick extends Thread {
 
         public void run() {
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                tot = null;
+            }
             for (int i = 97; i < 123 && ticking; i++) {
                 if (wf.getClue().check(Character.toLowerCase((char)i)) > 0) {
                     displayedText = wf.getClue().getDisplayPhrase();
@@ -282,20 +291,20 @@ public class WoFGUI extends JFrame {
                     try {
                         Thread.sleep(1000);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        tot = null;
                     }
                 }
+            }
+            for (JButton b: buzzers) {
+                b.setEnabled(false);
             }
             // here the clue has been completed
             if (ticking) {
                 tossUpRound = false;
                 tossUps++;
             }
-            for (JButton b: buzzers) {
-                b.setEnabled(false);
-            }
             ticking = false;
-            timer = null;
+            tot = null;
         }
     }
 	
@@ -341,6 +350,7 @@ public class WoFGUI extends JFrame {
     private int spinValue;
     private Timer timer;
     private int tossUps;
+    private TossUpTick tot;
 
     
     
@@ -572,11 +582,13 @@ public class WoFGUI extends JFrame {
         buyVowelAbility();
 
         if (tossUpRound) {
-            if (timer == null) {
+            if (tot == null) {
                 timer = new Timer();
-                timer.schedule(new TossUpTick(), 1000);
+                tot = new TossUpTick();
+                tot.start();
             }
-
+        }
+        if (ticking) { 
             for (JButton b: buzzers) {
                 b.setEnabled(true);
             }
@@ -584,6 +596,9 @@ public class WoFGUI extends JFrame {
 
         if (isCompleted()) {
             for (JButton b: buttons) {
+                b.setEnabled(false);
+            }
+            for (JButton b: buzzers) {
                 b.setEnabled(false);
             }
             spin.setEnabled(false);
@@ -596,12 +611,12 @@ public class WoFGUI extends JFrame {
             g2.draw(rightEye);
             Arc2D.Double mouth = new Arc2D.Double(100, 519, 23, 12, 0, -180, Arc2D.OPEN);
             g2.draw(mouth);
-            if (roundNumber < 5) {
+            if (roundNumber < 6) {
                 roundNumber++;
             }
         }
 
-        if (roundNumber >= 5) {
+        if (roundNumber >= 6) {
             g2.drawString("Game Over.", 100, 250 + ((playerInfo.length + 1) * 25));
             // call method to wtite game data to file in wf
             // ask playAgain
