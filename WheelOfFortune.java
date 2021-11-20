@@ -124,7 +124,7 @@ public class WheelOfFortune
             new FileWriter(FILE_PATH, false).close();
             FileWriter writer = new FileWriter(FILE_PATH, false);
             for (int i = 0; i < standings.size() && i < 5; i++) {
-                System.out.println("Player " + i + ", " + standings.get(i).getBank() + "\n");
+                //System.out.println("Player " + i + ", " + standings.get(i).getBank() + "\n");
                 writer.write("Player " + i + ", " + standings.get(i).getBank() + "\n");
             }
             writer.close();
