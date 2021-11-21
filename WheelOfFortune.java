@@ -14,6 +14,7 @@ public class WheelOfFortune
     private Player[] players;
     private int cp;
     private Wheel wheel;
+    private ArrayList<Player> standings;
     
     public WheelOfFortune() throws FileNotFoundException {
         clue = new Clue();
@@ -60,6 +61,13 @@ public class WheelOfFortune
         }
         return toString;
     }
+    public void playerWinTossUp(int round) {
+        int winnings = 1000;
+        if (round != 0) {
+            winnings += 1000;
+        }
+        this.players[this.cp].addBal(winnings);
+    }
 
     public boolean buyVowel(char c) {
         this.players[this.cp].addBal(-500);
@@ -99,7 +107,7 @@ public class WheelOfFortune
     private final String FILE_PATH = "data_file.csv";
     public void updateStandings() {
         // store player name, score
-        ArrayList<Player> standings = new ArrayList<Player>();
+        standings = new ArrayList<Player>();
         try {
             FileReader reader = new FileReader(new File(FILE_PATH));
             BufferedReader bR = new BufferedReader(reader);
@@ -108,8 +116,10 @@ public class WheelOfFortune
 
             while ((line = bR.readLine()) != null) {
                 Player p = new Player();
-                p.setBank(Integer.parseInt(line.substring(line.indexOf(",")  + 2)));
-                standings.add(p);
+                if (line.length() > 0) {
+                    p.setBank(Integer.parseInt(line.substring(line.indexOf(",")  + 2)));
+                    standings.add(p);
+                }
             }
             reader.close();
 
@@ -132,5 +142,35 @@ public class WheelOfFortune
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    public ArrayList<Player> retrieveStandings() {
+        standings = new ArrayList<Player>();
+        try {
+            FileReader reader = new FileReader(new File(FILE_PATH));
+            BufferedReader bR = new BufferedReader(reader);
+
+            String line;
+
+            while ((line = bR.readLine()) != null) {
+                Player p = new Player();
+                if (line.length() > 0) {
+                    p.setBank(Integer.parseInt(line.substring(line.indexOf(",")  + 2)));
+                    standings.add(p);
+                }
+            }
+            reader.close();
+
+            for (int i = 0; i < players.length; i++) {
+                standings.add(players[i]);
+            }
+            Collections.sort(standings, new Comparator<Player>(){
+                public int compare(Player o1, Player o2){
+                    return o2.getBank() - o1.getBank();
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return standings;
     }
 }

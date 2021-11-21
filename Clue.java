@@ -12,7 +12,7 @@ public class Clue {
 
 	private int currentIndex;
 
-	private String currentPhrase, guesses, displayPhrase, category;
+	private String currentPhrase, guesses, displayPhrase;
 	private ArrayList<String> data;
 	private String[] phrases;
 
