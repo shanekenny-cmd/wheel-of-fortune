@@ -12,9 +12,9 @@ public class Clue {
 
 	private int currentIndex;
 
-	private String currentPhrase, guesses, displayPhrase;
-	private ArrayList<String> data;
-	private String[] phrases;
+	private String currentPhrase, currentCategory, guesses, displayPhrase;
+	private ArrayList<String[]> data;
+	private String[][] phrases;
 
 	private Scanner in;
 
@@ -26,24 +26,28 @@ public class Clue {
         	in = new Scanner(new FileReader("../lotsOfClues.csv"));
         }
 
-        data = new ArrayList<String>();
+        data = new ArrayList<String[]>();
 
         while (in.hasNextLine()) {
-        	String line = in.nextLine();
-        	line = line.substring(1, line.substring(1).indexOf("\"") + 1).toLowerCase();
-        	if (!line.equals("puzzle")) {
+			String[] line = new String[2];
+			String rawLine = in.nextLine();
+			line[0] = rawLine.substring(1, rawLine.substring(1).indexOf("\"") + 1).toLowerCase();
+			rawLine = rawLine.substring(rawLine.indexOf(","));
+			line[1] = rawLine.substring(2, rawLine.substring(3).indexOf("\"") + 3);
+        	if (!line[0].equals("puzzle")) {
         		data.add(line);
         	}
         } 
     	
     	Collections.shuffle(data);
-    	phrases = new String[data.size()];
+    	phrases = new String[data.size()][2];
     	for (int i = 0; i < data.size(); i++) {
-    		phrases[i] = data.get(i);
+    		phrases[i][0] = data.get(i)[0];
+    		phrases[i][1] = data.get(i)[1];
     	}
 
 		this.currentIndex = 0;// change this to be random index that doesn't repeat phrases
-		this.currentPhrase = this.phrases[this.currentIndex];
+		this.currentPhrase = this.phrases[this.currentIndex][0];
 		this.guesses = this.PUNC;	
 		this.updateDisplayPhrase();
 
@@ -63,15 +67,16 @@ public class Clue {
 	public void newRound() {
 		this.guesses = this.PUNC;
 		this.currentIndex = (this.currentIndex + 1) % this.phrases.length;
-		this.currentPhrase = this.phrases[this.currentIndex];
+		this.currentPhrase = this.phrases[this.currentIndex][0];
+		this.currentCategory = this.phrases[this.currentIndex][1];
 	}
 
 	public boolean solve(String solution) {
-		if (solution.length() != this.phrases[currentIndex].length()) {
+		if (solution.length() != this.phrases[currentIndex][0].length()) {
 			return false;
 		}
 		for (int i = 0; i < solution.length(); i++) {
-			if (Character.toLowerCase(solution.toCharArray()[i]) != Character.toLowerCase(this.phrases[currentIndex].toCharArray()[i])) {
+			if (Character.toLowerCase(solution.toCharArray()[i]) != Character.toLowerCase(this.phrases[currentIndex][0].toCharArray()[i])) {
 				return false;
 			}
 		}
@@ -109,6 +114,10 @@ public class Clue {
 		}
 		//System.out.println("true");
 		return true;
+	}
+
+	public String getCategory() {
+		return this.currentCategory;
 	}
 
 	public String getGuesses() {

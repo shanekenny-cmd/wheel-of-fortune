@@ -7,6 +7,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Random;
+
 
 
 public class WoFGUI extends JFrame {
@@ -68,7 +70,7 @@ public class WoFGUI extends JFrame {
                 }
             }
             if (isCompleted()) {
-                gameMessages = "Correct! Player " + (wf.getCP() + 1) + " wins the round.";
+                gameMessages = "Correct! " + wf.getName(wf.getCP()) + " wins the round.";
             }
 
             displayedText = wf.getClue().getDisplayPhrase();
@@ -100,7 +102,7 @@ public class WoFGUI extends JFrame {
                 }
                 solutionField.setText("");
                 displayedText = wf.getClue().getDisplayPhrase();
-                gameMessages = "Correct! Player " + (wf.getCP() + 1) + " wins the round.";
+                gameMessages = "Correct! " + wf.getName(wf.getCP()) + " wins the round.";
                 repaint();
             } else {
                 gameMessages = "Inorrect!";
@@ -137,7 +139,7 @@ public class WoFGUI extends JFrame {
             ticking = false;
             tot.interrupt();
             tot = null;
-            int label = Integer.parseInt(((JButton) (e.getSource())).getText().charAt(7) + "") - 1;
+            int label = wf.getPlayerByName(((JButton) (e.getSource())).getText());//Integer.parseInt(((JButton) (e.getSource())).getText().charAt(7) + "") - 1;
             buzzAbl[label] = false;
             wf.setCurrentPlayer(label);
 
@@ -173,11 +175,11 @@ public class WoFGUI extends JFrame {
             gameMessages = "";
             if (spinValue == 2) {
                 // bankrupt current player
-                wheelMessages += "Player " + (wf.getCP() + 1) + " goes bankrupt.";
+                wheelMessages += wf.getName(wf.getCP()) + " goes bankrupt.";
                 wf.bankrupt();
             } else if (spinValue == 1) {
                 // current player loses turn
-                wheelMessages += "Player " + (wf.getCP() + 1) + " loses a turn.";
+                wheelMessages += wf.getName(wf.getCP()) + " loses a turn.";
                 wf.nextPlayer();
             } else {
                 solutionField.setEnabled(false);
@@ -216,6 +218,7 @@ public class WoFGUI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             gameMessages = "";
+            wheelMessages = "";
             getNewClue();
             initDisplayedText();
             for (int i = 0; i < buzzAbl.length; i++) {
@@ -245,10 +248,19 @@ public class WoFGUI extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            wf = null;
+            Random random = new Random();
+            String fileName = "advert_" + random.nextInt(9) + ".jpeg";
+            //System.out.println(fileName);
+            adImage = new ImageIcon(fileName).getImage();
+            //wf = null;
             timer = null;
+            // try {
+            //     wf = new WheelOfFortune();
+            // } catch (Exception ex) {
+            //     ex.printStackTrace();
+            // }
             try {
-                wf = new WheelOfFortune();
+                wf.reset();
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -283,8 +295,63 @@ public class WoFGUI extends JFrame {
 
     /**
      * 
-     * An ActionListener implementation for the PlayAgain button. Button only enabled after the player either wins
-     *  or loses a round. When pressed, everything resets with a new movie title.
+     * An ActionListener implementation for the name text fields.
+     *
+     *
+     */
+    private class NameFieldListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String name = ((JTextField)(e.getSource())).getText();
+            ((JTextField)(e.getSource())).setText("");
+            boolean isID = false;
+            ArrayList<Player> standings = wf.retrieveStandings();
+            for (Player p: standings) {
+                if (p.getID().equals(name)) {
+                    isID = true;
+                    if (!wf.checkIDS(name)) {
+                        for (int i = 0; i < nameFields.length; i++) {
+                            if (e.getSource().equals(nameFields[i])) {
+                                wf.setName(i, p.getName());
+                                wf.setID(i, name);
+                                ((JTextField)(e.getSource())).setVisible(false);
+                                getContentPane().remove(((JTextField)(e.getSource())));
+                                getContentPane().revalidate();
+                                buzzers[i].setText(wf.getName(i));
+                            }
+                        }
+                    }
+                }
+
+            }
+            //check name here
+            // set the correct player's name to be this
+            if (!isID) {
+                for (int i = 0; i < nameFields.length; i++) {
+                    if (e.getSource().equals(nameFields[i])) {
+                        if (wf.setName(i, name)) {
+                            ((JTextField)(e.getSource())).setVisible(false);
+                            getContentPane().remove(((JTextField)(e.getSource())));
+                            getContentPane().revalidate();
+                            buzzers[i].setText(wf.getName(i));
+                        }
+                    }
+                }
+            }
+            if (wf.checkNames()) {
+                namesInputed = true;
+                tossUpRound = true;
+                ticking = true;
+            }
+            repaint();
+        }
+        
+    }
+
+    /**
+     * 
+     * An ActionListener implementation for the Quit button. system.exit(0)
      *
      *
      */
@@ -368,8 +435,10 @@ public class WoFGUI extends JFrame {
     private JButton[] buzzers;
     private boolean[] buzzAbl;
     private JTextField solutionField;
-    private Image wheelImage;
+    private Image adImage;
     private BufferedImage bufImg;
+    private JTextField[] nameFields;
+    private NameFieldListener nfl;
 
     // game state variables
     private int roundNumber;
@@ -381,6 +450,7 @@ public class WoFGUI extends JFrame {
     private Timer timer;
     private int tossUps;
     private TossUpTick tot;
+    private boolean namesInputed;
 
     
     
@@ -402,17 +472,20 @@ public class WoFGUI extends JFrame {
         wf = new WheelOfFortune();
 
         // add randomization
-        wheelImage = new ImageIcon("wheel_image.jpeg").getImage();
+        Random random = new Random();
+        String fileName = "advert_" + random.nextInt(8) + ".jpeg";
+        adImage = new ImageIcon(fileName).getImage();
 
         wheelMessages = "";
         gameMessages = "";
         tossUps = 0;
         buyingVowel = false;
-        tossUpRound = true;
-        ticking = true;
+        tossUpRound = false;
+        ticking = false;
         spun = false;
         spinValue = 0;
         roundNumber = 0;
+        namesInputed = false;
 
         getNewClue();
         initDisplayedText();
@@ -420,6 +493,7 @@ public class WoFGUI extends JFrame {
         setLayout(new FlowLayout());
         initButtons();
         initTextField();
+        initNameFields();
         setVisible(true);
     }
     
@@ -429,7 +503,7 @@ public class WoFGUI extends JFrame {
     private void getNewClue() {
         actualText = wf.getNext(roundNumber + 1);
         displayedText = "";
-        if (roundNumber == 1 || roundNumber == 4) {
+        if ((roundNumber == 1 || roundNumber == 4) && namesInputed) {
             tossUpRound = true;
             ticking = true;
         }
@@ -440,6 +514,22 @@ public class WoFGUI extends JFrame {
      */
     private void initDisplayedText() {
         displayedText = wf.getClue().getDisplayPhrase();
+    }
+
+    private void initNameFields() {
+        container = getContentPane();
+        nfl = new NameFieldListener();
+        nameFields = new JTextField[wf.numPlayers()];
+        for (int i = 0; i < nameFields.length; i++) {
+            nameFields[i] = new JTextField(20);
+            container.add(nameFields[i]);
+            nameFields[i].addActionListener(nfl);
+            nameFields[i].setEnabled(true);
+            nameFields[i].setVisible(true);
+            nameFields[i].setBackground(Color.black);
+            nameFields[i].setForeground(Color.green);
+            nameFields[i].setFont(new Font("Courier New", Font.PLAIN, 14));
+        }
     }
 
     
@@ -473,19 +563,20 @@ public class WoFGUI extends JFrame {
         buzzers = new JButton[wf.numPlayers()];
         buzzAbl = new boolean[buzzers.length];
         for (int i = 0; i < buzzers.length; i++) {
-            buzzers[i] = new JButton("Player " + (i + 1));
+            buzzers[i] = new JButton(wf.getName(i));//("Player " + (i + 1));
             container.add(buzzers[i]);
             buzzers[i].addActionListener(new BuzzerListener());
             buzzers[i].setEnabled(false);
             buzzers[i].setBackground(Color.black);
             buzzers[i].setForeground(Color.green);
             buzzers[i].setFont(new Font("Courier New", Font.PLAIN, 14));
+            buzzers[i].setPreferredSize(new Dimension(100, 25));
             buzzAbl[i] = true;
         }
         spin = new JButton("Spin");
         container.add(spin);
         spin.addActionListener(new SpinListener());
-        spin.setEnabled(true);
+        spin.setEnabled(false);
         spin.setBackground(Color.black);
         spin.setForeground(Color.green);
         spin.setFont(new Font("Courier New", Font.PLAIN, 14));
@@ -493,7 +584,7 @@ public class WoFGUI extends JFrame {
         buyVowel = new JButton("Buy Vowel");
         container.add(buyVowel);
         buyVowel.addActionListener(new BuyVowelListener());
-        buyVowel.setEnabled(true);
+        buyVowel.setEnabled(false);
         buyVowel.setBackground(Color.black);
         buyVowel.setForeground(Color.green);
         buyVowel.setFont(new Font("Courier New", Font.PLAIN, 14));
@@ -534,7 +625,7 @@ public class WoFGUI extends JFrame {
         solutionField = new JTextField(20);
         container.add(solutionField);
         solutionField.addActionListener(new SolutionListener());
-        solutionField.setEnabled(true);
+        solutionField.setEnabled(false);
         solutionField.setBackground(Color.black);
         solutionField.setForeground(Color.green);
         solutionField.setFont(new Font("Courier New", Font.PLAIN, 14));
@@ -572,8 +663,8 @@ public class WoFGUI extends JFrame {
         ArrayList<Player> data = wf.retrieveStandings();
         standings = new String[data.size()];
         for (int i = 0; i < standings.length; i++) {
-            standings[i] =  "Player " + (i + 1) + 
-                            "\nBank: " + data.get(i).getBank();
+            standings[i] =  "Name: " + data.get(i).getName() +
+                            "\nScore: " + data.get(i).getBank();
         }
     }
 
@@ -584,9 +675,9 @@ public class WoFGUI extends JFrame {
     public void paint(Graphics g) {
         super.paint(g);
 
-        bufImg = new BufferedImage(wheelImage.getWidth(null), wheelImage.getHeight(null), BufferedImage.TYPE_INT_RGB);
+        bufImg = new BufferedImage(adImage.getWidth(null), adImage.getHeight(null), BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = bufImg.createGraphics();
-        g2.drawImage(wheelImage, 0, 0, null);
+        g2.drawImage(adImage, 0, 0, null);
         try {
             bufImg = resizeImage(bufImg, 200, 200);
         } catch (Exception e) {
@@ -601,13 +692,15 @@ public class WoFGUI extends JFrame {
 
         g2.drawImage(bufImg, null, 600, 175);
 
-        g2.drawString(gameMessages, 100, 150);
+        g2.drawString(gameMessages, 100, 125);
+
+        g2.drawString("Category: " + wf.getClue().getCategory(), 100, 150);
         
         g2.drawString(displayedText, 100, 175);
 
         g2.drawString(wheelMessages, 100, 200);
 
-        currentPlayer = "Player " + (wf.getCP() + 1) + "'s turn.";
+        currentPlayer = wf.getName(wf.getCP()) + "'s turn.";
         g2.drawString(currentPlayer, 100, 225);
 
         playerInfo = wf.getPlayerString();
@@ -618,8 +711,9 @@ public class WoFGUI extends JFrame {
         g2.drawString("Round: " + (roundNumber + 1), 100, 250 + (playerInfo.length * 25));
 
         getStandings();
+        g2.drawString("All time standings:", 100, 425);
         for (int i = 0; i < standings.length && i < 5; i++) {
-            g2.drawString(standings[i], 100, 400 + (i * 25));
+            g2.drawString(standings[i], 100, 450 + (i * 25));
         }
 
         nextRound.setEnabled(false);
@@ -628,7 +722,8 @@ public class WoFGUI extends JFrame {
 
         buyVowelAbility();
 
-        if (tossUpRound) {
+
+        if (tossUpRound && namesInputed) {
             if (tot == null) {
                 for (boolean b: buzzAbl) {
                     b = true;
@@ -638,7 +733,7 @@ public class WoFGUI extends JFrame {
                 tot.start();
             }
         }
-        if (ticking) { 
+        if (ticking && namesInputed) { 
             for (int i = 0; i < buzzers.length; i++) {
                 if (buzzAbl[i]) {
                     buzzers[i].setEnabled(true);
@@ -657,11 +752,11 @@ public class WoFGUI extends JFrame {
             buyVowel.setEnabled(false);
             solutionField.setEnabled(false);
             nextRound.setEnabled(true);
-            Ellipse2D.Double leftEye = new Ellipse2D.Double(100, 525, 5, 5);
+            Ellipse2D.Double leftEye = new Ellipse2D.Double(100, 600, 5, 5);
             g2.draw(leftEye);
-            Ellipse2D.Double rightEye = new Ellipse2D.Double(118, 525, 5, 5);
+            Ellipse2D.Double rightEye = new Ellipse2D.Double(118, 600, 5, 5);
             g2.draw(rightEye);
-            Arc2D.Double mouth = new Arc2D.Double(100, 519 + 25, 23, 12, 0, -180, Arc2D.OPEN);
+            Arc2D.Double mouth = new Arc2D.Double(100, 619, 23, 12, 0, -180, Arc2D.OPEN);
             g2.draw(mouth);
             if (roundNumber < 6) {
                 roundNumber++;
@@ -670,6 +765,8 @@ public class WoFGUI extends JFrame {
 
         if (roundNumber >= 6) {
             g2.drawString("Game Over.", 100, 250 + ((playerInfo.length + 1) * 25));
+            wf.bankRound();
+            g2.drawString(wf.getName(wf.getWinner()) + " is the winner.", 100, 250 + ((playerInfo.length + 2) * 25));
             // call method to wtite game data to file in wf
             // ask playAgain
             wf.updateStandings();
